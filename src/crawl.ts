@@ -89,7 +89,7 @@ async function main() {
                 appendNotOKLog(
                     processed.error.fullUrl,
                     processed.error.res,
-                    nextUrl,
+                    visitedLinks.get(nextUrl),
                     baseUrl.getUrlForFileName()
                 );
             }

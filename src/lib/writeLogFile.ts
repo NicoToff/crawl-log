@@ -14,7 +14,7 @@ export type LogItem = {
 export function appendNotOKLog(
     fullUrl: string,
     res: Response,
-    parentUrl: string,
+    parentUrl: string | undefined,
     fileName: string
 ): void {
     const logItem: LogItem = {
