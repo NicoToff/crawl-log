@@ -10,6 +10,9 @@
     "erasableSyntaxOnly": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "allowSyntheticDefaultImports": true,
     "strict": true
   },
   "exclude": ["dist", "node_modules"]

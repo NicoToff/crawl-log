@@ -1,4 +1,5 @@
 import { JSDOM } from "jsdom";
+import { logger } from "./Logger.ts";
 
 export function parseAnchors(
     html: string,
@@ -14,7 +15,11 @@ export function parseAnchors(
         ignoreUrlList?: string[];
     }
 ): string[] {
-    const { window } = new JSDOM(html, {
+    /** JSDOM doesn't like to parse style tags. It fails on CSS imports. */
+    const styleTagsRegexp = /<style\b[^>]*>[\s\S]*?<\/style>/gi;
+    const stylelessHtml = html.replace(styleTagsRegexp, "");
+
+    const { window } = new JSDOM(stylelessHtml, {
         pretendToBeVisual: true,
         storageQuota: 10 * 1024, // 10 KB
     });
@@ -30,7 +35,7 @@ export function parseAnchors(
 
         const fullUrl = getFullUrl(href);
         if (!fullUrl) {
-            console.debug(`Could not build full URL from: ${href}`);
+            logger.debug(`Could not build full URL from: ${href}`);
             continue;
         }
 
@@ -38,14 +43,14 @@ export function parseAnchors(
             fullUrl.includes(subStr)
         );
         if (isIgnored) {
-            console.debug(`⏭️ Is on ignore list: ${fullUrl}`);
+            logger.debug(`⏭️  Is on ignore list: ${fullUrl}`);
             continue;
         }
 
         // Do check a link to other websites, but don't continue crawling on them
         const isParentExternal = isExternalLink(parentUrl);
         if (isParentExternal) {
-            console.debug(`⏭️ Parent URL is external ${parentUrl}`);
+            logger.debug(`⏭️  Parent URL is external ${parentUrl}`);
             continue;
         }
 

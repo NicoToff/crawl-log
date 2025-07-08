@@ -3,6 +3,7 @@ import { appendFileSync } from "fs";
 import { BaseUrl } from "./lib/BaseUrl.ts";
 import { processUrl } from "./lib/processUrl.ts";
 import { parseAnchors } from "./lib/parseAnchors.ts";
+import { logger } from "./lib/Logger.ts";
 
 const startDate = new Date().toISOString().split("T")[0];
 
@@ -48,7 +49,7 @@ export function logNotOK(fullUrl: string, res: Response, domain: string): void {
 async function main() {
     const [, , url] = process.argv;
     if (!url) {
-        console.error("Usage: node index.js <START_URL>");
+        logger.error("Usage: node index.js <START_URL>");
         process.exit(1);
     }
     const baseUrl = new BaseUrl(url);
@@ -58,7 +59,7 @@ async function main() {
     // Process all queued links
     setInterval(async () => {
         if (queue.length === 0) {
-            console.log("No more links to process.");
+            logger.info("No more links to process.");
             return;
         }
 
@@ -66,10 +67,10 @@ async function main() {
         if (!nextUrl) return;
 
         try {
-            console.log(`Checking: ${nextUrl}, ${queue.length} left`);
+            logger.info(`Checking: ${nextUrl}, ${queue.length} left`);
             const fullUrl = baseUrl.getFullUrl(nextUrl);
             if (!fullUrl) {
-                console.warn(`Could not build full URL from: ${nextUrl}`);
+                logger.warn(`Could not build full URL from: ${nextUrl}`);
                 return;
             }
 
@@ -96,7 +97,7 @@ async function main() {
                 );
             }
         } catch (err) {
-            console.error(`Encountered error when fetching: ${nextUrl}`);
+            logger.error(`Encountered error when fetching: ${nextUrl}`);
             const path = join(
                 "errors",
                 `${startDate}-${baseUrl.getDomain()}-${ERROR_LOG}`

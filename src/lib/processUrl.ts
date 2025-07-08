@@ -1,4 +1,5 @@
 import { fetchPage } from "./fetchPage.ts";
+import { logger } from "./Logger.ts";
 
 export async function processUrl(fullUrl: string) {
     if (!fullUrl) {
@@ -15,7 +16,7 @@ export async function processUrl(fullUrl: string) {
 
     if (!res.ok) {
         if (res.status === 304 || res.status === 308) {
-            console.log(
+            logger.debug(
                 "res.status",
                 res.status,
                 "res.redirected",
