@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": false,
+    "noErrorTruncation": true,
+    "skipLibCheck": true,
+    "target": "es2023",
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "strict": true
+  },
+  "exclude": ["dist", "node_modules"]
+}
