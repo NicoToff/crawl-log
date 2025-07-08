@@ -1,14 +1,9 @@
-import { join } from "path";
-import { appendFileSync } from "fs";
+import { exit } from "process";
 import { BaseUrl } from "./lib/BaseUrl.ts";
 import { processUrl } from "./lib/processUrl.ts";
 import { parseAnchors } from "./lib/parseAnchors.ts";
 import { logger } from "./lib/Logger.ts";
-
-const startDate = new Date().toISOString().split("T")[0];
-
-const NOT_FOUND_LOG = "log.jsonl";
-const ERROR_LOG = "error.txt";
+import { appendErrorLog, appendNotOKLog } from "./lib/writeLogFile.ts";
 
 const ignoreUrlList = [
     ".google.",
@@ -27,32 +22,20 @@ const ignoreUrlList = [
 const visitedLinks = new Map<string, string>(); /* URL, parentURL */
 const queue: string[] = [];
 
-export type LogItem = {
-    date: string;
-    url: string;
-    statusCode: number;
-    parentUrl: string | null | undefined;
-    etag: string | null | undefined;
-};
-export function logNotOK(fullUrl: string, res: Response, domain: string): void {
-    const logItem: LogItem = {
-        date: new Date().toISOString(),
-        url: fullUrl,
-        statusCode: res.status,
-        parentUrl: visitedLinks.get(fullUrl),
-        etag: res.headers.get("etag"),
-    };
-    const path = join("logs", `${startDate}-${domain}-${NOT_FOUND_LOG}`);
-    appendFileSync(path, JSON.stringify(logItem, undefined, 4) + "\n", "utf-8");
-}
-
 async function main() {
     const [, , url] = process.argv;
     if (!url) {
         logger.error("Usage: node index.js <START_URL>");
         process.exit(1);
     }
-    const baseUrl = new BaseUrl(url);
+    let baseUrl: BaseUrl;
+    try {
+        baseUrl = new BaseUrl(url);
+    } catch (error) {
+        logger.error("The provided URL threw an error");
+        logger.error(error);
+        exit(1);
+    }
 
     queue.push(url);
 
@@ -63,9 +46,7 @@ async function main() {
     setInterval(async () => {
         if (queue.length === 0) {
             emptyQueueCount++;
-            logger.info(
-                `No more links to process. Empty queue count: ${emptyQueueCount}`
-            );
+            logger.info(`No more links to process.`);
             if (emptyQueueCount >= MAX_EMPTY_CHECKS) {
                 logger.info("Looks like we're done here ;)");
                 process.exit(0);
@@ -105,23 +86,16 @@ async function main() {
                 logger.warn(
                     `Status ${processed.error.res.status}: ${processed.error.fullUrl}`
                 );
-                logNotOK(
+                appendNotOKLog(
                     processed.error.fullUrl,
                     processed.error.res,
+                    nextUrl,
                     baseUrl.getUrlForFileName()
                 );
             }
         } catch (err) {
             logger.error(`Encountered error when fetching: ${nextUrl}`);
-            const path = join(
-                "errors",
-                `${startDate}-${baseUrl.getUrlForFileName()}-${ERROR_LOG}`
-            );
-            appendFileSync(
-                path,
-                `${new Date().toISOString()} ${(err as Error).message}\n`,
-                "utf-8"
-            );
+            appendErrorLog(err, baseUrl.getUrlForFileName());
         }
     }, 750);
 }
