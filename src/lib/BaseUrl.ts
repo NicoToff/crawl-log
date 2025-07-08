@@ -5,7 +5,10 @@ export class BaseUrl {
         this.baseUrl = new URL(url).origin;
     }
 
-    getDomain = () => new URL(this.baseUrl).origin.split(".").pop()!;
+    getUrlForFileName = () =>
+        new URL(this.baseUrl).origin
+            .replace("https://", "")
+            .replace(/[\.\/]/g, "_");
 
     getFullUrl = (path: string): string | undefined => {
         if (BaseUrl.isRelativePath(path)) {

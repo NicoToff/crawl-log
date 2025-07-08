@@ -56,11 +56,23 @@ async function main() {
 
     queue.push(url);
 
+    let emptyQueueCount = 0;
+    const MAX_EMPTY_CHECKS = 10;
+
     // Process all queued links
     setInterval(async () => {
         if (queue.length === 0) {
-            logger.info("No more links to process.");
+            emptyQueueCount++;
+            logger.info(
+                `No more links to process. Empty queue count: ${emptyQueueCount}`
+            );
+            if (emptyQueueCount >= MAX_EMPTY_CHECKS) {
+                logger.info("Looks like we're done here ;)");
+                process.exit(0);
+            }
             return;
+        } else {
+            emptyQueueCount = 0;
         }
 
         const nextUrl = queue.shift();
@@ -90,17 +102,20 @@ async function main() {
                     }
                 }
             } else if (processed.error.res) {
+                logger.warn(
+                    `Status ${processed.error.res.status}: ${processed.error.fullUrl}`
+                );
                 logNotOK(
                     processed.error.fullUrl,
                     processed.error.res,
-                    baseUrl.getDomain()
+                    baseUrl.getUrlForFileName()
                 );
             }
         } catch (err) {
             logger.error(`Encountered error when fetching: ${nextUrl}`);
             const path = join(
                 "errors",
-                `${startDate}-${baseUrl.getDomain()}-${ERROR_LOG}`
+                `${startDate}-${baseUrl.getUrlForFileName()}-${ERROR_LOG}`
             );
             appendFileSync(
                 path,
